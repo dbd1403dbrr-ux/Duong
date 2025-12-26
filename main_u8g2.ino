@@ -128,6 +128,20 @@ void callback(char* topic, byte* message, unsigned int length) {
      int id=(int)doc["iddk"];
      
      themvantay(id);
+   }
+  else if (doc.containsKey("xoaid") ) {
+    //digitalWrite(fanPin, (int)doc["fan"] == 1 ? HIGH : LOW);
+     int idxoa=(int)doc["xoaid"];
+
+     
+     xoa_van_tay_theo_id(idxoa);
+ }
+  else if (doc.containsKey("xoavantayall") ) {
+    //digitalWrite(fanPin, (int)doc["fan"] == 1 ? HIGH : LOW);
+     
+
+     
+     xoa_van_tay_toan_bo();
  }
 }
 
@@ -378,7 +392,9 @@ void setup() {
 unsigned long lastSend = 0;
 void loop() {
       if(WiFi.status() !=WL_CONNECTED)
-      {
+      {       display.clearBuffer();
+              oledShow("MAT KET NOI WIFI", ssidSaved);
+              display.sendBuffer();
              while(WiFi.status() !=WL_CONNECTED)
               {
                 if (ssidSaved != "") {
@@ -397,9 +413,12 @@ void loop() {
         }
       }
 
-      if (!van_tay.verifyPassword())
+      if (!van_tay.verifyPassword()){
+               display.clearBuffer();
+              oledShow("MAT KET NOI VAN TAY", ssidSaved);
+              display.sendBuffer();
          while (!van_tay.verifyPassword())
-           ketnoilaivantay();
+           ketnoilaivantay();}
        
 
       if(quet_van_tay()!=-1)  mo_khoa();
@@ -588,20 +607,54 @@ void xoa_van_tay_toan_bo() {
     }
 } 
 //  Hàm xóa vân tay theo ID
+
 void xoa_van_tay_theo_id(int id) {
-      display.clearBuffer();  
-      hienthi_oled("Dang xoa !",40,10);
-      display.sendBuffer(); 
-  if (van_tay.deleteModel(id) == FINGERPRINT_OK) {
-      display.clearBuffer(); 
-      hienthi_oled("Xoa thanh cong!",30,10);
-       display.sendBuffer(); 
-  } else {
-      display.clearBuffer();
-      hienthi_oled("Khong the xoa ID nay!",20,10);
-      display.sendBuffer();
+
+
+
+  // ===== Kiểm tra ID có tồn tại không =====
+  uint8_t check = van_tay.loadModel(id);
+
+  if (check != FINGERPRINT_OK) {
+    display.clearBuffer();
+    hienthi_oled("ID KHONG TON TAI", 10, 20);
+    
+    display.sendBuffer();
+
+   
+    delay(1500);
+    return;
   }
+
+
+  display.clearBuffer();  
+  hienthi_oled("Dang xoa...", 35, 15);
+
+  display.sendBuffer();  
+  delay(800);
+
+ 
+  uint8_t result = van_tay.deleteModel(id);
+
+  display.clearBuffer();
+
+  if (result == FINGERPRINT_OK) {
+    
+    hienthi_oled("XOA THANH CONG", 15, 20);
+    
+  } 
+  else {
+   
+    Serial.println(result);
+    hienthi_oled("XOA THAT BAI", 25, 20);
+    
+  }
+
+  display.sendBuffer();
+  delay(1500);
 }
+
+
 
 void ketnoilaivantay(){
     // KET NOI VAN TAY
